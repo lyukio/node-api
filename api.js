@@ -48,6 +48,14 @@ const Database = require('./databaseMongoDb')
 // npm install joi
 const Joi = require('joi')
 
+// Instalamos um módulo para cirar um token de autentificação
+// Enviamos um dado BÁSICO de cliente (nunca coloquesenha)
+// Nosso token poderá ser descriptografado, masnunca gerado novamente, ou alterado
+// npm i jsonwebtoken hapi-auth-jwt2@7
+
+const Jwt = require('jsonwebtoken')
+const HapiJwt = require('hapi-auth-jwt2')
+
 const Hapi = require('hapi')
 const app = new Hapi.Server()
 app.connection({ port: 4000 })
@@ -62,7 +70,7 @@ app.connection({ port: 4000 })
 async function run(app) {
     // para trabalhar com o Swagger, registramos 3 plugins
     // definimos o HapiSwagger como o padrão de plugin HapiJS
-
+    
     // para expor nossa rota para o mundo precisamos adicionar a propriedade api na configuração da rota
     await app.register([
         Vision,
@@ -70,8 +78,23 @@ async function run(app) {
         {
             register: HapiSwagger,
             options: { info: {title: 'API Herois', version: 'v1.0' } }
-        }
+        },
+        HapiJwt
     ])
+
+    // definimos uma estratégia pré-definida de autentificação
+    // por padrão é sem autentificação, mas agora, todas as rotas precisarão de um token nos headres para funcionar
+    app.auth.strategy('jwt', 'jwt', {
+        key: 'MINHA_CHAVE_SECRETA',
+        validateFunc: (decoded, request, callback) => {
+            //se quiser bloquear o cara é só mandar false
+            callback(null, true)
+        },
+        verifyOptions: { algorithms: ['HS256']}
+    })
+    app.auth.default('jwt')
+
+
     await Database.connect()
 
     app.route([
@@ -88,6 +111,9 @@ async function run(app) {
                     // body = payload
                     // headers = headers
                     // /herois?121221 = params
+                    headers: Joi.object({
+                        authorization: Joi.string().required()
+                    }).unknown(),
                     query: {
                         nome: Joi.string().max(100).min(1),
                         limite: Joi.number().required().max(150),
@@ -137,6 +163,9 @@ async function run(app) {
                 description: 'Cria um novo herói',
                 notes: 'Deve enviar o nome, poder e idade',
                 validate: {
+                    headers: Joi.object({
+                        authorization: Joi.string().required()
+                    }).unknown(),
                     payload: { //body
                         nome: Joi.string().required().max(100).min(5),
                         poder: Joi.string().required().max(100).min(3),
@@ -163,6 +192,9 @@ async function run(app) {
                 description: 'Exclui um herói',
                 notes: 'Deve enviar o id do herói',
                 validate: {
+                    headers: Joi.object({
+                        authorization: Joi.string().required()
+                    }).unknown(),
                     params: {
                         id: Joi.string().required()
                     }
@@ -190,6 +222,9 @@ async function run(app) {
                 description: 'Atualiza um herói',
                 notes: 'Deve enviar o id do herói e, opcionalmente, nome, poder e idade',
                 validate: {
+                    headers: Joi.object({
+                        authorization: Joi.string().required()
+                    }).unknown(),
                     payload: {
                         nome: Joi.string().max(100).min(5),
                         poder: Joi.string().max(100).min(3),
@@ -197,6 +232,29 @@ async function run(app) {
                     },
                     params: {
                         id: Joi.string().required()
+                    }
+                }
+            }
+        },
+        {
+            path: '/login',
+            method: 'POST',
+            handler: (request, reply) => {
+                const { usuario, senha } = request.payload
+                if (usuario !== 'xuxadasilva' || senha !== 123) return reply('Não pode acessar!!')
+                //geramos o token de autentificação
+                const token = Jwt.sign({ usuario: usuario }, 'MINHA_CHAVE_SECRETA')
+                return reply({ token }) // não é necessário escrever "token: token" quando tem o mesmo nome
+            },
+            config: {
+                // desabilitamos a autentificação para conseguir um token
+                auth: false,
+                description: 'Fazer login',
+                tags: ['api'],
+                validate: {
+                    payload: {
+                        usuario: Joi.string().required(),
+                        senha: Joi.number().integer().required()
                     }
                 }
             }
