@@ -116,7 +116,7 @@ class DatabaseMongoDB {
     async listar(filtro = {}, limite = 10, ignore = 0) {
 
         const resultado = await this.personagem
-            .find(filtro)
+            .find(filtro, {__v: 0})
             .limit(limite) //limitamos a quantidade de registros
             .skip(ignore) //ignoramos uma quantidade de registros para buscar após aquela quantidade
 
