@@ -12,8 +12,11 @@
   "dependencies": {
     "commander": "2.18.0",
     "hapi": "16.6.3",
+    "hapi-swagger": "^7.10.0",
+    "inert": "^4.2.1",
     "joi": "^13.7.0",
-    "mongoose": "^5.3.1"
+    "mongoose": "^5.3.1",
+    "vision": "^4.1.1"
   },
   "devDependencies": {},
   "repository": {

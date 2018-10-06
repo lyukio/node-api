@@ -1,3 +1,9 @@
+// instalamos um módulo para observar alterações e reiniciara aplicação automaticamente
+// npm install -g nodemon
+
+// npm i vision@4 hapi-swagger@7 inert@4
+// vision + inert expoem um front end e arquivos estáticos
+// hapi-swagger cria uma documentação baseada nas rotas criadas
 /*
     Quando trabalhamos com APIs Rest, trabalhamos com serviçossem estado
     Não temos mais sessão, não guardamos mais cookies
@@ -32,6 +38,10 @@
     3o passo: Definir a rota
     4o passo: Inicializar o servidor
 */
+const Vision = require('vision')
+const HapiSwagger = require('hapi-swagger')
+const Inert = require('inert')
+
 const Database = require('./databaseMongoDb')
 // savemos que o JS acontece algumas BIZARRICES e não temos tempo para ficar validando estas coisas
 // para evitar validar variaveis, valores, tipos e regras podemos definir um conjunto de regras que serão validadas antes de chamar a nossa API (handler)
@@ -50,6 +60,18 @@ app.connection({ port: 4000 })
 
 // Start the server
 async function run(app) {
+    // para trabalhar com o Swagger, registramos 3 plugins
+    // definimos o HapiSwagger como o padrão de plugin HapiJS
+
+    // para expor nossa rota para o mundo precisamos adicionar a propriedade api na configuração da rota
+    await app.register([
+        Vision,
+        Inert,
+        {
+            register: HapiSwagger,
+            options: { info: {title: 'API Herois', version: 'v1.0' } }
+        }
+    ])
     await Database.connect()
 
     app.route([
@@ -57,6 +79,9 @@ async function run(app) {
             path:'/herois',
             method:'GET',
             config: {
+                tags: ['api'],
+                description: 'Listar heróis com paginação',
+                notes: 'Deve enviar o ignore e limite para paginação',
                 validate: {
                     // podemos validar todo tipo de entrada da aplicação
                     // ?nome=nome = query
@@ -88,7 +113,7 @@ async function run(app) {
                     return reply(await Database.listar(filtro, limite, ignore));
 
                 } catch (error) {
-                    console.log('deu ruim', error);
+                    console.error('deu ruim', error);
                     return reply('deu ruim')
                 }
             }
@@ -103,16 +128,75 @@ async function run(app) {
                     const resultado = await Database.cadastrar(heroi)
                     return reply(resultado)
                 } catch (error) {
-                    console.log('deu ruim', error);
+                    console.error('deu ruim', error);
                     return reply('deu ruim');
                 }
             },
             config: {
+                tags: ['api'],
+                description: 'Cria um novo herói',
+                notes: 'Deve enviar o nome, poder e idade',
                 validate: {
                     payload: { //body
                         nome: Joi.string().required().max(100).min(5),
                         poder: Joi.string().required().max(100).min(3),
                         idade: Joi.number().required().max(150).min(18)
+                    }
+                }
+            }
+        },
+        {
+            path: '/herois/{id}',
+            method: 'DELETE',
+            handler: async (request, reply) => {
+                try {
+                    const { id } = request.params
+                    const result = await Database.remover( {_id: id })
+                    return reply(result)
+                } catch (error) {
+                    console.error('deu ruim', error)
+                    return reply('deu ruim')
+                }
+            },
+            config: {
+                tags: ['api'],
+                description: 'Exclui um herói',
+                notes: 'Deve enviar o id do herói',
+                validate: {
+                    params: {
+                        id: Joi.string().required()
+                    }
+                }
+            }
+        },
+        {
+            path: '/herois/{id}',
+            method: 'PATCH',
+            handler: async (request, reply) => {
+                try {
+                    const {id} = request.params
+                    const heroi = {nome, poder, idade} = request.payload
+                    const heroiString = JSON.stringify(heroi)
+                    const heroiJson = JSON.parse(heroiString)
+                    const resultado = await Database.atualizar(id, heroiJson)
+                    return reply(resultado)
+                } catch (error) {
+                    console.error('deu ruim', error)
+                    return reply('deu ruim')
+                }
+            },
+            config: {
+                tags: ['api'],
+                description: 'Atualiza um herói',
+                notes: 'Deve enviar o id do herói e, opcionalmente, nome, poder e idade',
+                validate: {
+                    payload: {
+                        nome: Joi.string().max(100).min(5),
+                        poder: Joi.string().max(100).min(3),
+                        idade: Joi.number().max(150).min(18)
+                    },
+                    params: {
+                        id: Joi.string().required()
                     }
                 }
             }
