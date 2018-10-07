@@ -4,7 +4,7 @@
   "description": "Curso Imersão em Desenvovimento de APIs em Node.js com @ErickWendel",
   "main": "index.js",
   "scripts": {
-    "deploy": "SET NODE_ENV=production && node api.js",
+    "deploy": "NODE_ENV=production node api.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
