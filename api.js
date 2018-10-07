@@ -1,4 +1,30 @@
-// paralogar no heroku
+// para controlar e metrificar nossa aplicação 
+// vamos usar uma ferramenta, que caso aconteça alguma situação inesperada (CPU max, memória no max, espeço em disco)
+// vai alterar aos devs, ou reiniciar a aplicação
+// npm i pm2 -g
+
+// pm2 start --name nomeDaAPI arquivo.js ->para inicializar uma aplicação e rodar em segundo plano
+// pm2 stop nomeDaAPI -> para parar a aplicação
+// pm2 list -> listar todas
+// pm2 monit nomeDaAPI -> mostrar um painel
+
+// caso queira mais instancias
+// pm2 start --name nomeDaAPI -i 10 arquivo.js
+
+// pm2 show nomeDaAPI para listarlogs
+
+// quando uma aplicação entra em segundo plano, ela mandaum sinal para SO informando que terminou a execução
+// pm2-runtime arquivo.js
+
+// para que o Heroku entenda o pm2, precisamos instalar globalmente antes de instalar as dependencias
+// adicionamos no script do package.json, o preinstall
+
+/**
+ * copiamos do pm2, em connect e colamos no terminal da aplicação
+ * heroku config:set PM2_PUBLIC_KEY=thm9u3mezffxpq0 PM2_SECRET_KEY=4x90od47zorbib8 
+ */
+
+// para logar no heroku
 // heroku login
 
 // heroku apps
