@@ -9,6 +9,7 @@
 // git status -> para visualizar se os arquivos estão de acordo
 // git add . -> adicionar todos os arquivos da minha pasta
 // git commit -m "Uma mensagem da modificação"
+// git push heroku master
 
 // para criar uma aplicação
 // heroku apps:create api-herois
