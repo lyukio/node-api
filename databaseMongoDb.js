@@ -77,7 +77,7 @@ const Schema = require('mongoose').Schema
 
 class DatabaseMongoDB {
     connect(){
-        Mongoose.connect('mongodb://localhost:27017/herois', { useNewUrlParser: true })
+        Mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true })
         const connection = Mongoose.connection
         connection.once('open', () => console.log('db rodando!!'))
         
